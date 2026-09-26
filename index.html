@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Hillah River System - Monitoring Network (draft)</title>
+<link rel="stylesheet" href="lib/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header id="top">
+  <div id="brand"><b>Hillah River System - Monitoring Network</b><span>Draft showcase &middot; INTERNAL &middot; CWRM data v1</span></div>
+  <nav id="tabs" aria-label="Views"></nav>
+  <div id="logos"><img src="img/giz.png" alt="Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) GmbH" class="lg-giz" onerror="this.style.display='none'"><span class="sep"></span><img src="img/mowr.png" alt="Ministry of Water Resources" class="lg-mowr" onerror="this.style.display='none'"></div>
+  <button id="aboutBtn" type="button">About / assumptions</button>
+</header>
+
+<div id="app">
+  <aside id="side">
+    <button id="sideToggle" type="button">Views, filters &amp; station list</button>
+    <div id="sideScroll">
+      <section class="sec">
+        <h2 id="viewTitle"></h2>
+        <p id="viewDesc"></p>
+        <div id="stats"></div>
+        <div class="note" id="viewNote"></div>
+      </section>
+      <section class="sec" id="gapctl" hidden>
+        <h3>Coverage radius (indicative)</h3>
+        <input id="radius" type="range" min="5" max="60" step="1" value="25">
+        <div class="note">A river stretch counts as <b>covered</b> when it lies within <span class="val" id="radiusVal">25</span> km (straight line) of an existing station. Adjust to test other spacing.</div>
+      </section>
+      <section class="sec" id="filters">
+        <h3>Search &amp; filter</h3>
+        <input id="q" type="search" placeholder="Search station name or ID (e.g. Daghara, H-03)">
+        <div class="fgroup"><label>Status</label><div class="chips" id="fStatus"></div></div>
+        <div class="fgroup"><label>Implementation priority</label><div class="chips" id="fPriority"></div></div>
+        <div class="fgroup"><label>Branch</label><div class="chips" id="fBranch"></div></div>
+        <div class="fgroup"><label>Monitoring requirement met</label><select id="req"></select></div>
+        <button id="reset" type="button">Reset filters</button>
+      </section>
+      <section class="sec">
+        <div id="listHead"><h3 style="margin:0">Stations</h3><span id="count"></span></div>
+        <div id="list" style="margin-top:8px"></div>
+      </section>
+    </div>
+  </aside>
+  <main id="map">
+    <div id="draftTag">DRAFT &middot; FOR DISCUSSION</div>
+    <div id="layers" class="panelbox"></div>
+    <div id="legend" class="panelbox"></div>
+  </main>
+</div>
+
+<aside id="card" aria-live="polite">
+  <div id="cardHead"></div>
+  <div id="cardBody"></div>
+  <div id="cardNav"><button id="prevSt" type="button">&larr; Previous</button><button id="nextSt" type="button">Next &rarr;</button></div>
+</aside>
+
+<div id="about" class="modal"><div id="aboutBox"></div></div>
+<div id="lb" class="modal"><button class="x" id="lbx" type="button">&times;</button><button class="nav l" id="lbl" type="button">&#10094;</button><img id="lbimg" alt=""><button class="nav r" id="lbr" type="button">&#10095;</button><div class="c" id="lbc"></div></div>
+
+<script src="lib/leaflet/leaflet.js"></script>
+<script src="data/stations.js"></script>
+<script src="data/reaches.js"></script>
+<script src="data/euphrates.js"></script>
+<script src="data/canals.js"></script>
+<script src="data/drains.js"></script>
+<script src="data/governorates.js"></script>
+<script src="data/projects.js"></script>
+<script src="data/modStations.js"></script>
+<script src="data/refPoints.js"></script>
+<script src="data/station_extra.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
