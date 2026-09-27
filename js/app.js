@@ -36,9 +36,9 @@ L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo
 map.getPane('network').style.pointerEvents = 'auto';
 const cv = L.canvas({ padding: 0.5, pane: 'network' }), cvR = L.canvas({ padding: 0.5, pane: 'reaches' }), cvG = L.canvas({ padding: 0.5, pane: 'gaps' });
 const BASE = {
-  light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 16 }),
-  streets: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }),
-  imagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 19 })
+  light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 16, crossOrigin: true }),
+  streets: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, crossOrigin: true }),
+  imagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 19, crossOrigin: true })
 };
 let curBase = 'light'; BASE.light.addTo(map);
 
@@ -309,8 +309,8 @@ document.addEventListener('keydown', e => {
 $('#aboutBtn').onclick = () => { $('#aboutBox').innerHTML = `<button class="closeb" id="abx" type="button">Close</button><h2>About this draft</h2><div class="note">Showcase of the current situation, monitoring gaps and the proposed future monitoring network of the Hillah River system. Internal draft - not for public release.</div>
   <h3>Views</h3><ul><li><b>Current network</b> - existing stations and their reported condition.</li><li><b>Identified gaps</b> - river stretches beyond a chosen radius of any existing station, and proposed sites with no existing station nearby.</li><li><b>Phase 1 priorities</b> - stations of 1st priority and the existing stations they replace.</li><li><b>Long-term master plan</b> - all 14 proposed stations, by priority.</li></ul>
   <h3>Assumptions (to be confirmed)</h3><ul><li>Phase 1 = the four 1st-priority stations of the design (V01); the master plan = all 14 proposed stations.</li><li>"Needs attention" for existing stations comes from the source status text and the photo captions ("damaged", "partially damaged", "needs relocation", "transmitter inactive").</li><li>The gap rule (straight-line radius around existing stations, default 25 km, adjustable) is a working assumption, not a design criterion.</li><li>Photo pairs for H-05 and H-06 were assigned from the order of photographs in the design document.</li><li>Requirement labels I-VII are abbreviated from the wording of the design table.</li></ul>
-  <h3>Not yet available (shown as "Not available - to be provided")</h3><ul><li>Responsible institution of each station; parameters proposed for future monitoring; telemetry details of proposed stations.</li><li>Meteorological stations, and the scope of rehabilitation / upgrade per existing station.</li></ul>
-  <h3>Data</h3><ul><li>Network, boundaries and stations: CWRM master GeoPackage v1 (curated from MoWR / SWLRI data); stations and photographs: Monitoring network design V01 (2026-08-17).</li><li>"MOD stations" and "project reference points" come from the project map file and their status is not stated.</li><li>Basemaps need an internet connection. To add missing facts, edit <code>data/station_extra.js</code>.</li></ul><div class="partners"><img src="img/giz.png" alt="GIZ" onerror="this.style.display='none'"><img src="img/mowr.png" alt="Ministry of Water Resources" onerror="this.style.display='none'"></div>`;
+  <h3>Not yet available (shown as "Not available - to be provided")</h3><ul><li>Responsible institution of each station.</li><li>Meteorological stations, and the scope of rehabilitation / upgrade per existing station.</li></ul>
+  <h3>Data</h3><ul><li>Network, boundaries and stations: CWRM master GeoPackage v1 (curated from MoWR / SWLRI data); stations and photographs: Monitoring network design V01 (2026-08-17).</li><li>Parameters and telemetry of the 14 proposed stations confirmed 2026-09-27: water level, discharge (m3/sec), velocity (m/sec), pH, dissolved oxygen, electrical conductivity, temperature and turbidity, expandable to meteorological parameters; satellite telemetry, real-time, recording every 15 minutes and transmission every hour.</li><li>"MOD stations" and "project reference points" come from the project map file and their status is not stated.</li><li>Basemaps need an internet connection. To add missing facts, edit <code>data/station_extra.js</code>.</li></ul><div class="partners"><img src="img/giz.png" alt="GIZ" onerror="this.style.display='none'"><img src="img/mowr.png" alt="Ministry of Water Resources" onerror="this.style.display='none'"></div>`;
   $('#about').classList.add('on'); $('#abx').onclick = () => $('#about').classList.remove('on'); };
 $('#about').onclick = e => { if (e.target.id === 'about') $('#about').classList.remove('on'); };
 $('#sideToggle').onclick = () => document.body.classList.toggle('side-open');
@@ -327,5 +327,87 @@ buildTabs(); buildFilters(); buildLayerPanel(); readHash(); render();
 if (innerWidth < 1250) { $('#lyBd').style.display = 'none'; $('#lyCaret').innerHTML = '&#9656;'; $('#legend').classList.add('min'); }
 if (selected) { document.body.classList.add('card-open'); fillCard(false); const s = byId[selected], cw = innerWidth > 900 ? 396 : 0; map.setView(map.unproject(map.project([s.lat, s.lng], 12).add([cw / 2, innerWidth > 900 ? 0 : 150]), 12), 12); if ($('#lyBd')) { $('#lyBd').style.display = 'none'; $('#lyCaret').innerHTML = '&#9656;'; } } else fitView();
 lowZoom();
+
+/* ---- print / export (static PDF or PNG of the current extent) ---- */
+(function () {
+  const MMSIZE = { a4: [210, 297], a5: [148, 210] }; // portrait [w,h] mm
+  const DPI = 150, PXMM = DPI / 25.4, HEAD_H = 100, FOOT_H = 92;
+  const BASE_LABEL = { light: 'Esri Light Gray', streets: 'OpenStreetMap', imagery: 'Esri Imagery' };
+  let pFormat = 'pdf', pSize = 'a4', pOrient = 'landscape';
+  const pagePx = (size, orient) => { let [w, h] = MMSIZE[size]; if (orient === 'landscape') { const t = w; w = h; h = t; } return { wmm: w, hmm: h, wpx: Math.round(w * PXMM), hpx: Math.round(h * PXMM) }; };
+  function updateNote() { const p = pagePx(pSize, pOrient); $('#pNote').textContent = `Page: ${p.wmm} × ${p.hmm} mm (${pSize.toUpperCase()}, ${pOrient}). The current map extent is stretched to fit this page shape.`; }
+  function wire(sel, set) { document.querySelectorAll(sel + ' .chip').forEach(b => b.onclick = () => { document.querySelectorAll(sel + ' .chip').forEach(x => x.classList.remove('on')); b.classList.add('on'); set(b.dataset.v); updateNote(); }); }
+  wire('#pFormat', v => pFormat = v); wire('#pSize', v => pSize = v); wire('#pOrient', v => pOrient = v);
+  $('#printBtn').onclick = () => { updateNote(); $('#printModal').classList.add('on'); };
+  $('#pmx').onclick = () => $('#printModal').classList.remove('on');
+  $('#printModal').onclick = e => { if (e.target.id === 'printModal') $('#printModal').classList.remove('on'); };
+  $('#pGo').onclick = () => { $('#printModal').classList.remove('on'); doExport(); };
+
+  function waitTilesIdle(maxMs) {
+    return new Promise(resolve => {
+      const start = Date.now();
+      setTimeout(function poll() {
+        const pending = document.querySelectorAll('#map .leaflet-tile:not(.leaflet-tile-loaded)').length;
+        if (pending === 0 || Date.now() - start > maxMs) resolve(); else setTimeout(poll, 150);
+      }, 350);
+    });
+  }
+
+  async function doExport() {
+    const go = $('#pGo'), busy = $('#printBusy'), msg = $('#printBusyMsg'), mapEl = $('#map');
+    go.disabled = true; busy.classList.add('on'); msg.textContent = 'Preparing export…';
+    const orig = { flex: mapEl.style.flex, width: mapEl.style.width, height: mapEl.style.height };
+    const restore = () => {
+      mapEl.style.flex = orig.flex; mapEl.style.width = orig.width; mapEl.style.height = orig.height;
+      $('#printHead').style.display = 'none'; $('#printFoot').style.display = 'none';
+      document.body.classList.remove('exporting'); map.invalidateSize({ animate: false });
+    };
+    try {
+      const { wpx, hpx, wmm, hmm } = pagePx(pSize, pOrient);
+      const viewLabel = VIEWS[view].label;
+      const now = new Date(), dateStr = now.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' });
+      $('#printHead').innerHTML = `<div class="ph-logos"><img src="img/giz.png" alt="GIZ" onerror="this.style.display='none'"><img src="img/mowr.png" alt="Ministry of Water Resources" onerror="this.style.display='none'"></div><div class="ph-text"><b>Hillah River System - Monitoring Network</b><span>${esc(viewLabel)} · ${pSize.toUpperCase()} ${pOrient} · DRAFT - FOR DISCUSSION · INTERNAL</span></div>`;
+      $('#printHead').style.height = HEAD_H + 'px';
+      const legendHtml = $('#legend').innerHTML.replace(' id="lgH"', '');
+      const scaleTxt = (document.querySelector('#map .leaflet-control-scale-line') || {}).textContent || '';
+      $('#printFoot').innerHTML = `<div class="pf-legend">${legendHtml}</div><div class="pf-meta">Basemap: ${esc(BASE_LABEL[curBase] || curBase)}${scaleTxt ? ' · scale near map centre: ' + esc(scaleTxt) : ''}<br>Generated ${dateStr} · CWRM master GeoPackage v1 · draft, not for public release</div>`;
+      $('#printFoot').style.height = FOOT_H + 'px';
+
+      document.body.classList.add('exporting');
+      mapEl.style.flex = '0 0 auto'; mapEl.style.width = wpx + 'px'; mapEl.style.height = hpx + 'px';
+      $('#printHead').style.display = 'flex'; $('#printFoot').style.display = 'flex';
+      map.invalidateSize({ animate: false });
+
+      msg.textContent = 'Loading map tiles…';
+      await waitTilesIdle(3000);
+      await new Promise(r => setTimeout(r, 200));
+
+      msg.textContent = 'Rendering page…';
+      const canvas = await html2canvas(mapEl, { useCORS: true, allowTaint: false, backgroundColor: '#ffffff', width: wpx, height: hpx, windowWidth: Math.max(wpx, innerWidth), windowHeight: Math.max(hpx, innerHeight), scale: 1 });
+
+      restore();
+
+      const ts = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const fname = `Hillah_${view}_${pSize}_${pOrient}_${ts}`;
+      if (pFormat === 'png') {
+        msg.textContent = 'Saving image…';
+        canvas.toBlob(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png');
+      } else {
+        msg.textContent = 'Building PDF…';
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: pOrient === 'landscape' ? 'l' : 'p', unit: 'mm', format: pSize });
+        doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, wmm, hmm);
+        doc.save(fname + '.pdf');
+      }
+    } catch (err) {
+      console.error(err);
+      restore();
+      alert('The export could not be generated (' + (err && err.message ? err.message : err) + '). Try the other format, or a smaller page size, and try again.');
+    } finally {
+      busy.classList.remove('on'); go.disabled = false;
+    }
+  }
+})();
+
 window.__cwrm = { map, select, setView, S };
 })();

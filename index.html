@@ -13,6 +13,7 @@
   <div id="brand"><b>Hillah River System - Monitoring Network</b><span>Draft showcase &middot; INTERNAL &middot; CWRM data v1</span></div>
   <nav id="tabs" aria-label="Views"></nav>
   <div id="logos"><img src="img/giz.png" alt="Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) GmbH" class="lg-giz" onerror="this.style.display='none'"><span class="sep"></span><img src="img/mowr.png" alt="Ministry of Water Resources" class="lg-mowr" onerror="this.style.display='none'"></div>
+  <button id="printBtn" type="button">Print / export map</button>
   <button id="aboutBtn" type="button">About / assumptions</button>
 </header>
 
@@ -50,6 +51,8 @@
     <div id="draftTag">DRAFT &middot; FOR DISCUSSION</div>
     <div id="layers" class="panelbox"></div>
     <div id="legend" class="panelbox"></div>
+    <div id="printHead"></div>
+    <div id="printFoot"></div>
   </main>
 </div>
 
@@ -60,9 +63,31 @@
 </aside>
 
 <div id="about" class="modal"><div id="aboutBox"></div></div>
+<div id="printModal" class="modal"><div id="printBox">
+  <button class="closeb" id="pmx" type="button">Close</button>
+  <h2>Print / export map</h2>
+  <div class="note">Exports the current map view (extent, view, basemap and visible layers) as a static page. Station and gap filters in the side panel do not change what is exported - only the active view / map extent does.</div>
+  <div class="pfield"><label>Format</label><div class="chips" id="pFormat">
+    <button type="button" class="chip on" data-v="pdf">PDF</button>
+    <button type="button" class="chip" data-v="png">Image (PNG)</button>
+  </div></div>
+  <div class="pfield"><label>Page size</label><div class="chips" id="pSize">
+    <button type="button" class="chip on" data-v="a4">A4</button>
+    <button type="button" class="chip" data-v="a5">A5</button>
+  </div></div>
+  <div class="pfield"><label>Orientation</label><div class="chips" id="pOrient">
+    <button type="button" class="chip on" data-v="landscape">Landscape</button>
+    <button type="button" class="chip" data-v="portrait">Portrait</button>
+  </div></div>
+  <div class="note" id="pNote"></div>
+  <button id="pGo" type="button" class="pgo">Export</button>
+</div></div>
+<div id="printBusy" class="modal"><div id="printBusyBox"><div class="spin"></div><div id="printBusyMsg">Preparing export…</div></div></div>
 <div id="lb" class="modal"><button class="x" id="lbx" type="button">&times;</button><button class="nav l" id="lbl" type="button">&#10094;</button><img id="lbimg" alt=""><button class="nav r" id="lbr" type="button">&#10095;</button><div class="c" id="lbc"></div></div>
 
 <script src="lib/leaflet/leaflet.js"></script>
+<script src="lib/export/html2canvas.min.js"></script>
+<script src="lib/export/jspdf.umd.min.js"></script>
 <script src="data/stations.js"></script>
 <script src="data/reaches.js"></script>
 <script src="data/euphrates.js"></script>

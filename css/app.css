@@ -17,8 +17,8 @@ button{font:inherit;cursor:pointer}
 .tab:hover{background:rgba(255,255,255,.2)}
 .tab.on{background:#fff;color:var(--navy);border-color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2)}
 .tab i{width:10px;height:10px;border-radius:50%;display:inline-block}
-#aboutBtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:6px 12px}
-#aboutBtn:hover{background:rgba(255,255,255,.15)}
+#aboutBtn,#printBtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:6px 12px}
+#aboutBtn:hover,#printBtn:hover{background:rgba(255,255,255,.15)}
 #sideToggle{display:none}
 /* layout */
 #app{position:absolute;top:58px;left:0;right:0;bottom:0;display:flex}
@@ -137,6 +137,36 @@ dl.fields dd{margin:0;line-height:1.4}
 #aboutBox h2{margin:0 0 4px;color:var(--navy)} #aboutBox h3{margin:16px 0 4px;color:var(--navy);font-size:14px}
 #aboutBox ul{margin:4px 0 8px 18px;padding:0} #aboutBox li{margin:3px 0;line-height:1.4}
 #aboutBox .closeb{float:right;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:7px 14px}
+/* print / export */
+#printBox{background:#fff;border-radius:14px;width:420px;max-width:92vw;padding:24px 28px;box-shadow:var(--shadow)}
+#printBox h2{margin:0 0 4px;color:var(--navy)}
+#printBox .closeb{float:right;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:7px 14px}
+.pfield{margin-top:14px}
+.pfield label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.pfield .chips .chip{border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;background:#fff}
+.pfield .chips .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+#pNote{margin-top:14px}
+.pgo{display:block;width:100%;margin-top:18px;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:11px 0;font-weight:700;font-size:14.5px}
+.pgo:hover{background:#0e4a72}
+.pgo:disabled{opacity:.55;cursor:default}
+#printBusy{z-index:4000}
+#printBusyBox{background:#fff;border-radius:14px;padding:30px 40px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--navy);font-weight:600}
+.spin{width:34px;height:34px;border-radius:50%;border:4px solid #DCE6EE;border-top-color:var(--navy);animation:spin 0.85s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#printHead,#printFoot{display:none;position:absolute;left:0;right:0;z-index:5000;background:#fff;box-sizing:border-box;align-items:center}
+#printHead{top:0;border-bottom:2px solid var(--navy);justify-content:space-between;padding:0 22px}
+#printHead .ph-logos{display:flex;align-items:center;gap:14px}
+#printHead .ph-logos img{display:block;height:40px;width:auto}
+#printHead .ph-text{text-align:right}
+#printHead .ph-text b{display:block;color:var(--navy);font-size:17px}
+#printHead .ph-text span{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+#printFoot{bottom:0;border-top:1px solid var(--line);justify-content:space-between;padding:0 22px;font-size:11px;color:var(--muted)}
+#printFoot .pf-legend{display:flex;flex-wrap:wrap;gap:7px 12px;align-items:center;max-width:64%}
+#printFoot .pf-legend .row{display:flex;align-items:center;gap:4px;margin:0;font-size:10.5px}
+#printFoot .pf-legend .row svg{width:15px;height:15px}
+#printFoot .pf-legend h4{display:none}
+#printFoot .pf-meta{text-align:right;line-height:1.5;font-size:10.5px;flex:none}
+.exporting #draftTag,.exporting #layers,.exporting #legend,.exporting .leaflet-control-container{display:none!important}
 #lb{background:rgba(5,12,20,.92)}
 #lb img{max-width:92vw;max-height:86vh;border-radius:6px}
 #lb .c{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:#fff;font-size:13px}
@@ -145,7 +175,7 @@ dl.fields dd{margin:0;line-height:1.4}
 /* responsive */
 @media (max-width:900px){
   #brand{min-width:0} #brand span{display:none} #tabs{justify-content:flex-start;overflow-x:auto} .tab{padding:7px 10px;font-size:12.5px;white-space:nowrap}
-  #aboutBtn{display:none}
+  #aboutBtn,#printBtn{display:none}
   #side{position:absolute;left:0;right:0;bottom:0;top:auto;width:auto;min-width:0;height:46%;transform:translateY(calc(100% - 44px));transition:transform .25s;border-right:none;border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.2)}
   body.side-open #side{transform:none}
   #sideToggle{display:block;background:none;border:none;border-bottom:1px solid var(--line);height:44px;width:100%;font-weight:700;color:var(--navy)}
