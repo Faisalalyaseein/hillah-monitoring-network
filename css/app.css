@@ -201,3 +201,6 @@ dl.fields dd{margin:0;line-height:1.4}
 @media (max-width:1250px){#logos .lg-giz{height:20px}#logos .lg-mowr{height:28px}#top{gap:10px}}
 @media (max-width:900px){#logos{padding:3px 7px;height:34px;gap:6px;margin-right:4px}#logos .lg-giz{height:16px}#logos .lg-mowr{height:24px}#logos .sep{height:20px}}
 #tabs::-webkit-scrollbar{display:none}#tabs{scrollbar-width:none}
+
+/* data sources in About */
+#aboutBox .srcs{margin:12px 0 4px;border-top:1px solid #E3E9EE;padding-top:8px}#aboutBox .srcs summary{cursor:pointer;font-weight:700;color:var(--navy)}#aboutBox .srcs h4{margin:12px 0 2px;font-size:13px;color:var(--navy)}#aboutBox .srcs p{margin:3px 0;font-size:12.3px;line-height:1.45;color:#3C4B58}

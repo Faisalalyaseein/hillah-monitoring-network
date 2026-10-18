@@ -9,3 +9,5 @@ Parameters and telemetry of the 14 proposed stations are shown on each station c
 "Print / export map" (top right) saves the current map view as a PDF or PNG, in A4 or A5, portrait or landscape.
 
 Static site (HTML, JavaScript, Leaflet, html2canvas, jsPDF) – no build step.
+
+Updated 2026-10-18: 13 drains and extra drain attributes added to the drains layer, the Hilla-Hashimiya drainage project as a separate layer (off at start, location unverified), and an English / Arabic list of data sources under *About*.
