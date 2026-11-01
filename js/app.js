@@ -103,12 +103,16 @@ function syncNet() {
   const z = map.getZoom();
   net.forEach(n => { const want = ON[n.overlay] && z >= n.minZoom; if (want && !map.hasLayer(n.layer)) n.layer.addTo(map); if (!want && map.hasLayer(n.layer)) map.removeLayer(n.layer); });
   const set = (l, on) => { if (on && !map.hasLayer(l)) l.addTo(map); if (!on && map.hasLayer(l)) map.removeLayer(l); };
-  set(lyHash, ON.hash); set(lyGov, ON.gov); set(lyGovLab, ON.gov && z <= 10); set(lyProj, ON.proj); set(lyEuph, ON.euph); set(lyEuphUp, ON.euph); set(lyBasin, ON.basin); set(lyLakes, ON.lakes); set(lyBRiv, ON.brivers); set(lyMod, ON.mod); set(lyRef, ON.ref);
+  set(lyHash, ON.hash); set(lyGov, ON.gov); set(lyGovLab, ON.gov && z <= 10); set(lyProj, ON.proj); set(lyEuph, ON.euph); set(lyEuphUp, ON.euph); const basinZ = z <= 7; /* the basin layers are for the regional view; they disappear when zooming in */ set(lyBasin, ON.basin && basinZ); set(lyLakes, ON.lakes && basinZ); set(lyBRiv, ON.brivers && basinZ); set(lyMod, ON.mod); set(lyRef, ON.ref);
   set(lyRivLab, (ON.reaches || ON.euph) && z >= 8 && z <= 12);
   set(lyReach, ON.reaches && view !== 'gaps');
   set(gapLayer, ON.reaches && view === 'gaps');
   map.getPane('network').style.opacity = view === 'gaps' ? 0.4 : 0.85;
 }
+const bmCtl = L.control({ position: 'bottomright' });
+bmCtl.onAdd = () => { const d = L.DomUtil.create('div', 'bm-ctl'); d.innerHTML = '<button data-b="light" class="on">Light</button><button data-b="streets">Streets</button><button data-b="imagery">Imagery</button>'; L.DomEvent.disableClickPropagation(d); d.addEventListener('click', e => { const b = e.target.closest('button[data-b]'); if (b) pickBase(b.dataset.b); }); return d; };
+bmCtl.addTo(map);
+function pickBase(k) { map.removeLayer(BASE[curBase]); curBase = k; BASE[k].addTo(map).bringToBack(); document.querySelectorAll('.bm button[data-b], .bm-ctl button[data-b]').forEach(x => x.classList.toggle('on', x.dataset.b === k)); }
 function buildLayerPanel() {
   const el = $('#layers');
   const row = (k, label, sw) => `<label><input type="checkbox" data-k="${k}" ${ON[k] ? 'checked' : ''}>${sw}<span>${label}</span></label>`;
@@ -124,7 +128,7 @@ function buildLayerPanel() {
   el.addEventListener('change', e => { const k = e.target.dataset.k; if (k) { ON[k] = e.target.checked; syncNet(); } });
   el.addEventListener('click', e => {
     const b = e.target.closest('button[data-b]');
-    if (b) { map.removeLayer(BASE[curBase]); curBase = b.dataset.b; BASE[curBase].addTo(map).bringToBack(); el.querySelectorAll('.bm button').forEach(x => x.classList.toggle('on', x === b)); }
+    if (b) pickBase(b.dataset.b);
     const zb = e.target.closest('button[data-z]'); if (zb) map.fitBounds(EXT[zb.dataset.z], { padding: [20, 20] });
     if (e.target.closest('#lyHd')) { const bd = $('#lyBd'); bd.style.display = bd.style.display === 'none' ? '' : 'none'; $('#lyCaret').innerHTML = bd.style.display === 'none' ? '&#9656;' : '&#9662;'; }
   });
@@ -322,7 +326,7 @@ $('#aboutBtn').onclick = () => { $('#aboutBox').innerHTML = `<button class="clos
   <h3>Views</h3><ul><li><b>Current network</b> - existing stations and their reported condition.</li><li><b>Identified gaps</b> - river stretches beyond a chosen radius of any existing station, and proposed sites with no existing station nearby.</li><li><b>Phase 1 priorities</b> - stations of 1st priority and the existing stations they replace.</li><li><b>Long-term master plan</b> - all 14 proposed stations, by priority.</li></ul>
   <h3>Assumptions (to be confirmed)</h3><ul><li>Phase 1 = the four 1st-priority stations of the design (V01); the master plan = all 14 proposed stations.</li><li>"Needs attention" for existing stations comes from the source status text and the photo captions ("damaged", "partially damaged", "needs relocation", "transmitter inactive").</li><li>The gap rule (straight-line radius around existing stations, default 25 km, adjustable) is a working assumption, not a design criterion.</li><li>Photo pairs for H-05 and H-06 were assigned from the order of photographs in the design document.</li><li>Requirement labels I-VII are abbreviated from the wording of the design table.</li></ul>
   <h3>Not yet available (shown as "Not available - to be provided")</h3><ul><li>Responsible institution of each station.</li><li>Meteorological stations, and the scope of rehabilitation / upgrade per existing station.</li></ul>
-  <h3>Data</h3><ul><li>Network, boundaries and stations: CWRM master GeoPackage v1 (curated from MoWR / SWLRI data, updated 2026-10-18); stations and photographs: Monitoring network design V01 (2026-08-17).</li><li>Drains: 13 drains and extra attributes (alternative name, drain order, design discharge, area served) were added on 2026-10-18 from other tables of Shatt_Al_Hilla_Map_DMS.gpkg; the discharge and area units are not stated in the source. The Hilla-Hashimiya drainage project (CAD export) is a separate layer, off at start, location unverified.</li><li>Parameters and telemetry of the 14 proposed stations confirmed 2026-09-27: water level, discharge (m3/sec), velocity (m/sec), pH, dissolved oxygen, electrical conductivity, temperature and turbidity, expandable to meteorological parameters; satellite telemetry, real-time, recording every 15 minutes and transmission every hour.</li><li>"MOD stations" and "project reference points" come from the project map file and their status is not stated.</li><li>Basemaps need an internet connection. To add missing facts, edit <code>data/station_extra.js</code>.</li></ul><details class="srcs"><summary>Data sources / مصادر البيانات</summary>${(D.sources || []).map(x => `<h4>${esc(x.t)} &middot; <span dir="rtl">${esc(x.tAr)}</span></h4><p>${esc(x.en)}</p><p dir="rtl">${esc(x.ar)}</p>`).join('')}</details><div class="partners"><img src="img/giz.png" alt="GIZ" onerror="this.style.display='none'"><img src="img/mowr.png" alt="Ministry of Water Resources" onerror="this.style.display='none'"></div>`;
+  <h3>Data</h3><ul><li>Network, boundaries and stations: CWRM master GeoPackage v1 (curated from MoWR / SWLRI data, updated 2026-10-18); stations and photographs: Monitoring network design V01 (2026-08-17).</li><li>Drains: 13 drains and extra attributes (alternative name, drain order, design discharge, area served) were added on 2026-10-18 from other tables of Shatt_Al_Hilla_Map_DMS.gpkg; the discharge and area units are not stated in the source. The Hilla-Hashimiya drainage project (CAD export) is a separate layer, off at start, location unverified.</li><li>Parameters and telemetry of the 14 proposed stations confirmed 2026-09-27: water level, discharge (m3/sec), velocity (m/sec), pH, dissolved oxygen, electrical conductivity, temperature and turbidity, expandable to meteorological parameters; satellite telemetry, real-time, recording every 15 minutes and transmission every hour.</li><li>"MOD stations" and "project reference points" come from the project map file and their status is not stated.</li><li>Basemaps need an internet connection. To add missing facts, edit <code>data/station_extra.js</code>.</li></ul><details class="srcs"><summary>Data sources / مصادر البيانات</summary>${(D.sources || []).map(x => `<h4>${esc(x.t)} &middot; <span dir="rtl">${esc(x.tAr)}</span></h4><p>${esc(x.en)}</p><p dir="rtl">${esc(x.ar)}</p>`).join('')}</details><div class="partners"><img src="img/giz.png" alt="GIZ" onerror="this.style.display='none'"></div>`;
   $('#about').classList.add('on'); $('#abx').onclick = () => $('#about').classList.remove('on'); };
 $('#about').onclick = e => { if (e.target.id === 'about') $('#about').classList.remove('on'); };
 $('#sideToggle').onclick = () => document.body.classList.toggle('side-open');
@@ -422,4 +426,6 @@ lowZoom();
 })();
 
 window.__cwrm = { map, select, setView, S };
+/* safety: if the map container had no size at start (zoom ends up far too close), refit to the Hillah system */
+window.addEventListener('load', () => setTimeout(() => { map.invalidateSize(); if (map.getZoom() > 13 && !selected) map.fitBounds(EXT.hrs); }, 400));
 })();

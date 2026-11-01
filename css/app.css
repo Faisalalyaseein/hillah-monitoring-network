@@ -204,3 +204,7 @@ dl.fields dd{margin:0;line-height:1.4}
 
 /* data sources in About */
 #aboutBox .srcs{margin:12px 0 4px;border-top:1px solid #E3E9EE;padding-top:8px}#aboutBox .srcs summary{cursor:pointer;font-weight:700;color:var(--navy)}#aboutBox .srcs h4{margin:12px 0 2px;font-size:13px;color:var(--navy)}#aboutBox .srcs p{margin:3px 0;font-size:12.3px;line-height:1.45;color:#3C4B58}
+
+.bm-ctl{display:flex;gap:4px;background:rgba(255,255,255,.95);border-radius:8px;padding:4px;box-shadow:0 2px 10px rgba(11,60,93,.25);margin-bottom:6px}
+.bm-ctl button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 9px;font-size:12px;color:#33475A}
+.bm-ctl button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
