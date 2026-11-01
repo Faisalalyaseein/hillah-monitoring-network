@@ -204,3 +204,6 @@ dl.fields dd{margin:0;line-height:1.4}
 
 /* data sources in About */
 #aboutBox .srcs{margin:12px 0 4px;border-top:1px solid #E3E9EE;padding-top:8px}#aboutBox .srcs summary{cursor:pointer;font-weight:700;color:var(--navy)}#aboutBox .srcs h4{margin:12px 0 2px;font-size:13px;color:var(--navy)}#aboutBox .srcs p{margin:3px 0;font-size:12.3px;line-height:1.45;color:#3C4B58}
+
+.tiles-soft{filter:grayscale(1) brightness(1.06) contrast(.88)}
+.bm{flex-wrap:wrap}
