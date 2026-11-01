@@ -36,7 +36,10 @@ L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo
 map.getPane('network').style.pointerEvents = 'auto';
 const cv = L.canvas({ padding: 0.5, pane: 'network' }), cvR = L.canvas({ padding: 0.5, pane: 'reaches' }), cvG = L.canvas({ padding: 0.5, pane: 'gaps' });
 const BASE = {
-  light: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, crossOrigin: true, className: 'tiles-soft' }),
+  light: (function () {
+    const osmSoft = () => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, crossOrigin: true, className: 'tiles-soft' });
+    try { return L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron', attribution: '&copy; <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; OpenMapTiles, data from OpenStreetMap', preserveDrawingBuffer: true }); } catch (e) { return osmSoft(); }
+  })(),
   streets: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, crossOrigin: true }),
   topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors, SRTM | &copy; OpenTopoMap (CC-BY-SA)', maxZoom: 17, crossOrigin: true }),
   imagery: L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/g/{z}/{y}/{x}.jpg', { attribution: 'Sentinel-2 cloudless (s2maps.eu) by EOX IT Services GmbH, contains modified Copernicus Sentinel data 2021 (CC BY-NC-SA 4.0)', maxZoom: 14, crossOrigin: true })
@@ -115,7 +118,7 @@ function buildLayerPanel() {
   el.addEventListener('change', e => { const k = e.target.dataset.k; if (k) { ON[k] = e.target.checked; syncNet(); } });
   el.addEventListener('click', e => {
     const b = e.target.closest('button[data-b]');
-    if (b) { map.removeLayer(BASE[curBase]); curBase = b.dataset.b; BASE[curBase].addTo(map).bringToBack(); el.querySelectorAll('.bm button').forEach(x => x.classList.toggle('on', x === b)); }
+    if (b) { map.removeLayer(BASE[curBase]); curBase = b.dataset.b; BASE[curBase].addTo(map); if (BASE[curBase].bringToBack) BASE[curBase].bringToBack(); el.querySelectorAll('.bm button').forEach(x => x.classList.toggle('on', x === b)); }
     if (e.target.closest('#lyHd')) { const bd = $('#lyBd'); bd.style.display = bd.style.display === 'none' ? '' : 'none'; $('#lyCaret').innerHTML = bd.style.display === 'none' ? '&#9656;' : '&#9662;'; }
   });
 }
@@ -334,7 +337,7 @@ lowZoom();
 (function () {
   const MMSIZE = { a4: [210, 297], a5: [148, 210] }; // portrait [w,h] mm
   const DPI = 150, PXMM = DPI / 25.4, HEAD_H = 100, FOOT_H = 92;
-  const BASE_LABEL = { light: 'OpenStreetMap (light grey)', streets: 'OpenStreetMap', topo: 'OpenTopoMap', imagery: 'Sentinel-2 cloudless (EOX)' };
+  const BASE_LABEL = { light: 'OpenFreeMap Positron (light grey)', streets: 'OpenStreetMap', topo: 'OpenTopoMap', imagery: 'Sentinel-2 cloudless (EOX)' };
   let pFormat = 'pdf', pSize = 'a4', pOrient = 'landscape';
   const pagePx = (size, orient) => { let [w, h] = MMSIZE[size]; if (orient === 'landscape') { const t = w; w = h; h = t; } return { wmm: w, hmm: h, wpx: Math.round(w * PXMM), hpx: Math.round(h * PXMM) }; };
   function updateNote() { const p = pagePx(pSize, pOrient); $('#pNote').textContent = `Page: ${p.wmm} × ${p.hmm} mm (${pSize.toUpperCase()}, ${pOrient}). The current map extent is stretched to fit this page shape.`; }
