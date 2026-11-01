@@ -29,7 +29,7 @@ const ORDER = S.slice().sort((a, b) => (a.status === b.status ? 0 : a.status ===
 const REQ = { I: 'Boundary of the system (upstream / downstream)', II: 'Mandatory offtake / distribution point', III: 'Urban area (upstream / downstream)', IV: 'Density node (spacing)', V: 'Administrative boundary metering', VI: 'Abstraction / sewage impact', VII: 'Regulator / mixing reference' };
 
 /* ---------------- map ---------------- */
-const map = L.map('map', { zoomControl: false, minZoom: 6, maxZoom: 18, preferCanvas: true, attributionControl: true }).fitBounds([[31.35, 44.15], [32.85, 45.7]]);
+const map = L.map('map', { zoomControl: false, minZoom: 4, maxZoom: 18, preferCanvas: true, attributionControl: true }).fitBounds([[31.35, 44.15], [32.85, 45.7]]);
 L.control.zoom({ position: 'topleft' }).addTo(map);
 L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo(map);
 ['network', 'reaches', 'gaps'].forEach((n, i) => { map.createPane(n).style.zIndex = 420 + i * 10; });
@@ -74,6 +74,14 @@ const lyProj = L.geoJSON(D.projects, {
 const lyHash = L.geoJSON(D.hashimiya, { pane: 'network', renderer: cv, style: { color: '#8E44AD', weight: 2.4, dashArray: '8 5', opacity: .95 }, onEachFeature: (f, l) => l.bindPopup(`<b>${esc(f.properties.n)}</b><br><span dir="rtl">${esc(f.properties.ar)}</span><br>${(+f.properties.l).toFixed(1)} km<br><i>CAD export - location NOT verified: the source has no coordinate system and most of the line follows the Hillah river. Verify before use.</i>`, { closeButton: false }) });
 const lyReach = L.geoJSON(D.reaches, { pane: 'reaches', renderer: cvR, style: { color: C.hrs, weight: 4.2, opacity: 1, lineCap: 'round' }, onEachFeature: (f, l) => l.bindTooltip(`<b>${esc(f.properties.branch)}</b> reach ${f.properties.order} &middot; ${(+f.properties.km).toFixed(1)} km`, { sticky: true }) });
 const lyEuph = L.geoJSON(D.euphrates, { pane: 'reaches', renderer: cvR, interactive: false, style: { color: C.blue, weight: 4.2, opacity: .95 } });
+/* ---- transboundary basin and full Euphrates course (same data and styles as the story map; added 2026-11-02) ---- */
+map.createPane('basin').style.zIndex = 410;
+const cvBasin = L.canvas({ padding: 0.5, pane: 'basin' }), BR_W = { 1: 2.2, 2: 1.3, 3: 0.8 };
+const lyBasin = L.geoJSON(D.basin, { pane: 'basin', renderer: cvBasin, interactive: false, style: f => f.properties.name === 'Euphrates basin' ? { color: C.blue, weight: 2, fillColor: C.blue, fillOpacity: 0.07 } : { color: '#7C8FA0', weight: 1.2, dashArray: '5 4', fillColor: '#7C8FA0', fillOpacity: 0.06 } });
+const lyLakes = L.geoJSON(D.basinLakes, { pane: 'basin', renderer: cvBasin, style: { color: '#1565C0', weight: 0.8, fillColor: '#9BCDEB', fillOpacity: 0.9 }, onEachFeature: (f, l) => l.bindTooltip(`<b>${esc(f.properties.name || 'Lake')}</b>`, { sticky: true }) });
+const lyBRiv = L.geoJSON(D.basinRivers, { pane: 'basin', renderer: cvBasin, style: f => ({ color: '#5BA7DC', weight: BR_W[f.properties.rank] || 0.8, opacity: 0.95 }), onEachFeature: (f, l) => l.bindTooltip(`<b>${esc(f.properties.name || 'River')}</b>`, { sticky: true }) });
+const lyEuphUp = L.geoJSON(D.euphUp, { pane: 'reaches', renderer: cvR, interactive: false, style: { color: C.blue, weight: 4.2, opacity: .95 } });
+const EXT = { hrs: [[31.35, 44.15], [32.85, 45.7]], basin: [[29.6, 34.6], [40.6, 49.4]] }; // extents of the story map (scenes 3 and 1)
 const lyMod = L.layerGroup(D.modStations.features.map(f => L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { radius: 6, color: '#fff', weight: 1.5, fillColor: '#6C7A89', fillOpacity: 1 }).bindTooltip(`<b>${esc(f.properties.name)}</b><br>Station along the Main Outfall Drain (source: project KML; status not stated)`)));
 const lyRef = L.layerGroup(D.refPoints.features.map(f => L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { radius: 4.5, color: '#fff', weight: 1.2, fillColor: '#8E6FB0', fillOpacity: 1 }).bindTooltip(`<b>${esc(f.properties.name)}</b><br>Project reference point (drain / water user association / village)`)));
 
@@ -90,12 +98,12 @@ const lyRivLab = L.layerGroup();
 })();
 
 /* ---- overlay switches ---- */
-const ON = { reaches: true, euph: true, canals: true, drains: true, hash: false, proj: false, gov: true, mod: false, ref: false };
+const ON = { basin: true, brivers: true, lakes: true, reaches: true, euph: true, canals: true, drains: true, hash: false, proj: false, gov: true, mod: false, ref: false };
 function syncNet() {
   const z = map.getZoom();
   net.forEach(n => { const want = ON[n.overlay] && z >= n.minZoom; if (want && !map.hasLayer(n.layer)) n.layer.addTo(map); if (!want && map.hasLayer(n.layer)) map.removeLayer(n.layer); });
   const set = (l, on) => { if (on && !map.hasLayer(l)) l.addTo(map); if (!on && map.hasLayer(l)) map.removeLayer(l); };
-  set(lyHash, ON.hash); set(lyGov, ON.gov); set(lyGovLab, ON.gov && z <= 10); set(lyProj, ON.proj); set(lyEuph, ON.euph); set(lyMod, ON.mod); set(lyRef, ON.ref);
+  set(lyHash, ON.hash); set(lyGov, ON.gov); set(lyGovLab, ON.gov && z <= 10); set(lyProj, ON.proj); set(lyEuph, ON.euph); set(lyEuphUp, ON.euph); set(lyBasin, ON.basin); set(lyLakes, ON.lakes); set(lyBRiv, ON.brivers); set(lyMod, ON.mod); set(lyRef, ON.ref);
   set(lyRivLab, (ON.reaches || ON.euph) && z >= 8 && z <= 12);
   set(lyReach, ON.reaches && view !== 'gaps');
   set(gapLayer, ON.reaches && view === 'gaps');
@@ -106,7 +114,9 @@ function buildLayerPanel() {
   const row = (k, label, sw) => `<label><input type="checkbox" data-k="${k}" ${ON[k] ? 'checked' : ''}>${sw}<span>${label}</span></label>`;
   const line = (c, w = 3, d = '') => `<i class="line" style="border-color:${c};border-top-width:${w}px;${d ? 'border-top-style:dashed' : ''}"></i>`;
   el.innerHTML = `<div class="hd" id="lyHd"><span>Map layers</span><span id="lyCaret">&#9662;</span></div><div class="bd" id="lyBd">
-    <h4>Network</h4>${row('reaches', 'Hillah River system (branches)', line(C.hrs, 4))}${row('euph', 'Euphrates River', line(C.blue, 4))}${row('canals', 'Irrigation canals', line(C.canal, 2))}${row('drains', 'Drainage canals (incl. MOD)', line(C.drain, 2))}${row('hash', 'Hilla-Hashimiya drainage project (CAD, location unverified)', line('#8E44AD', 2, 1))}
+    <h4>Network</h4>${row('reaches', 'Hillah River system (branches)', line(C.hrs, 4))}${row('euph', 'Euphrates River (full course)', line(C.blue, 4))}${row('canals', 'Irrigation canals', line(C.canal, 2))}${row('drains', 'Drainage canals (incl. MOD)', line(C.drain, 2))}${row('hash', 'Hilla-Hashimiya drainage project (CAD, location unverified)', line('#8E44AD', 2, 1))}
+    <h4>Transboundary basin</h4>${row('basin', 'Euphrates and Tigris basins (HydroBASINS)', '<i class="line" style="border-color:#1565C0;border-top-width:2px"></i>')}${row('brivers', 'Rivers of the basin (RIMES)', line('#5BA7DC', 2))}${row('lakes', 'Lakes and reservoirs (RIMES)', '<i class="line" style="border-color:#9BCDEB;border-top-width:6px;width:14px"></i>')}
+    <div class="bm" style="margin:6px 0 2px"><button data-z="hrs">Zoom: Hillah system</button><button data-z="basin">Zoom: whole basin</button></div>
     <h4>Context</h4>${row('proj', 'Irrigation projects', line(C.ag, 2, 1))}${row('gov', 'Governorate boundaries', line(C.gov, 1, 1))}
     <h4>Other source points</h4>${row('mod', 'MOD stations (status not stated)', '<i class="line" style="border-color:#6C7A89;border-top-width:6px;width:10px"></i>')}${row('ref', 'Project reference points', '<i class="line" style="border-color:#8E6FB0;border-top-width:6px;width:10px"></i>')}
     <h4>Basemap</h4><div class="bm"><button data-b="light" class="on">Light</button><button data-b="streets">Streets</button><button data-b="imagery">Imagery</button></div>
@@ -115,6 +125,7 @@ function buildLayerPanel() {
   el.addEventListener('click', e => {
     const b = e.target.closest('button[data-b]');
     if (b) { map.removeLayer(BASE[curBase]); curBase = b.dataset.b; BASE[curBase].addTo(map).bringToBack(); el.querySelectorAll('.bm button').forEach(x => x.classList.toggle('on', x === b)); }
+    const zb = e.target.closest('button[data-z]'); if (zb) map.fitBounds(EXT[zb.dataset.z], { padding: [20, 20] });
     if (e.target.closest('#lyHd')) { const bd = $('#lyBd'); bd.style.display = bd.style.display === 'none' ? '' : 'none'; $('#lyCaret').innerHTML = bd.style.display === 'none' ? '&#9656;' : '&#9662;'; }
   });
 }
