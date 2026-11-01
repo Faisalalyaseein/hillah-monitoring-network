@@ -36,13 +36,9 @@ L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo
 map.getPane('network').style.pointerEvents = 'auto';
 const cv = L.canvas({ padding: 0.5, pane: 'network' }), cvR = L.canvas({ padding: 0.5, pane: 'reaches' }), cvG = L.canvas({ padding: 0.5, pane: 'gaps' });
 const BASE = {
-  light: (function () {
-    const osmSoft = () => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, crossOrigin: true, className: 'tiles-soft' });
-    try { return L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron', attribution: '&copy; <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; OpenMapTiles, data from OpenStreetMap', preserveDrawingBuffer: true }); } catch (e) { return osmSoft(); }
-  })(),
+  light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 16, crossOrigin: true }),
   streets: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, crossOrigin: true }),
-  topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { subdomains: 'abc', attribution: '&copy; OpenStreetMap contributors, SRTM | &copy; OpenTopoMap (CC-BY-SA)', maxZoom: 17, crossOrigin: true }),
-  imagery: L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/g/{z}/{y}/{x}.jpg', { attribution: 'Sentinel-2 cloudless (s2maps.eu) by EOX IT Services GmbH, contains modified Copernicus Sentinel data 2021 (CC BY-NC-SA 4.0)', maxZoom: 14, crossOrigin: true })
+  imagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 19, crossOrigin: true })
 };
 let curBase = 'light'; BASE.light.addTo(map);
 
@@ -113,12 +109,12 @@ function buildLayerPanel() {
     <h4>Network</h4>${row('reaches', 'Hillah River system (branches)', line(C.hrs, 4))}${row('euph', 'Euphrates River', line(C.blue, 4))}${row('canals', 'Irrigation canals', line(C.canal, 2))}${row('drains', 'Drainage canals (incl. MOD)', line(C.drain, 2))}${row('hash', 'Hilla-Hashimiya drainage project (CAD, location unverified)', line('#8E44AD', 2, 1))}
     <h4>Context</h4>${row('proj', 'Irrigation projects', line(C.ag, 2, 1))}${row('gov', 'Governorate boundaries', line(C.gov, 1, 1))}
     <h4>Other source points</h4>${row('mod', 'MOD stations (status not stated)', '<i class="line" style="border-color:#6C7A89;border-top-width:6px;width:10px"></i>')}${row('ref', 'Project reference points', '<i class="line" style="border-color:#8E6FB0;border-top-width:6px;width:10px"></i>')}
-    <h4>Basemap</h4><div class="bm"><button data-b="light" class="on">Light grey</button><button data-b="streets">Streets</button><button data-b="topo">Terrain</button><button data-b="imagery">Satellite</button></div>
+    <h4>Basemap</h4><div class="bm"><button data-b="light" class="on">Light</button><button data-b="streets">Streets</button><button data-b="imagery">Imagery</button></div>
     <div class="note" style="margin-top:6px">Canals and drains show more detail as you zoom in.</div></div>`;
   el.addEventListener('change', e => { const k = e.target.dataset.k; if (k) { ON[k] = e.target.checked; syncNet(); } });
   el.addEventListener('click', e => {
     const b = e.target.closest('button[data-b]');
-    if (b) { map.removeLayer(BASE[curBase]); curBase = b.dataset.b; BASE[curBase].addTo(map); if (BASE[curBase].bringToBack) BASE[curBase].bringToBack(); el.querySelectorAll('.bm button').forEach(x => x.classList.toggle('on', x === b)); }
+    if (b) { map.removeLayer(BASE[curBase]); curBase = b.dataset.b; BASE[curBase].addTo(map).bringToBack(); el.querySelectorAll('.bm button').forEach(x => x.classList.toggle('on', x === b)); }
     if (e.target.closest('#lyHd')) { const bd = $('#lyBd'); bd.style.display = bd.style.display === 'none' ? '' : 'none'; $('#lyCaret').innerHTML = bd.style.display === 'none' ? '&#9656;' : '&#9662;'; }
   });
 }
@@ -337,7 +333,7 @@ lowZoom();
 (function () {
   const MMSIZE = { a4: [210, 297], a5: [148, 210] }; // portrait [w,h] mm
   const DPI = 150, PXMM = DPI / 25.4, HEAD_H = 100, FOOT_H = 92;
-  const BASE_LABEL = { light: 'OpenFreeMap Positron (light grey)', streets: 'OpenStreetMap', topo: 'OpenTopoMap', imagery: 'Sentinel-2 cloudless (EOX)' };
+  const BASE_LABEL = { light: 'Esri Light Gray', streets: 'OpenStreetMap', imagery: 'Esri Imagery' };
   let pFormat = 'pdf', pSize = 'a4', pOrient = 'landscape';
   const pagePx = (size, orient) => { let [w, h] = MMSIZE[size]; if (orient === 'landscape') { const t = w; w = h; h = t; } return { wmm: w, hmm: h, wpx: Math.round(w * PXMM), hpx: Math.round(h * PXMM) }; };
   function updateNote() { const p = pagePx(pSize, pOrient); $('#pNote').textContent = `Page: ${p.wmm} × ${p.hmm} mm (${pSize.toUpperCase()}, ${pOrient}). The current map extent is stretched to fit this page shape.`; }
