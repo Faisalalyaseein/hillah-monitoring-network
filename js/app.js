@@ -82,7 +82,9 @@ const lyLakes = L.geoJSON(D.basinLakes, { pane: 'basin', renderer: cvBasin, styl
 const lyBRiv = L.geoJSON(D.basinRivers, { pane: 'basin', renderer: cvBasin, style: f => ({ color: '#5BA7DC', weight: BR_W[f.properties.rank] || 0.8, opacity: 0.95 }), onEachFeature: (f, l) => l.bindTooltip(`<b>${esc(f.properties.name || 'River')}</b>`, { sticky: true }) });
 const lyEuphUp = L.geoJSON(D.euphUp, { pane: 'reaches', renderer: cvR, interactive: false, style: { color: C.blue, weight: 4.2, opacity: .95 } });
 const EXT = { hrs: [[31.35, 44.15], [32.85, 45.7]], basin: [[29.6, 34.6], [40.6, 49.4]] }; // extents of the story map (scenes 3 and 1)
-const lyMod = L.layerGroup(D.modStations.features.map(f => L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { radius: 6, color: '#fff', weight: 1.5, fillColor: '#6C7A89', fillOpacity: 1 }).bindTooltip(`<b>${esc(f.properties.name)}</b><br>Station along the Main Outfall Drain (source: project KML; status not stated)`)));
+const modIcon = L.divIcon({ className: 'mk-wrap', iconSize: [22, 22], iconAnchor: [11, 11], html: '<svg viewBox="-13 -13 26 26" width="22" height="22"><rect x="-8.5" y="-8.5" width="17" height="17" rx="2" fill="#fff" stroke="#7A3E0B" stroke-width="3.2"/></svg>' });
+const modPopup = (p) => `<div style="max-width:230px"><b>${esc(p.id)} &middot; ${esc(p.name)}</b><br>${esc(p.type)}<br><i>Proposed station on the Main Outfall Drain (table received 2026-11-02)</i>${p.photo ? `<br><img src="${esc(p.photo)}" alt="${esc(p.name)}" style="width:100%;margin-top:6px;border-radius:6px">` : ''}</div>`;
+const lyMod = L.layerGroup(D.modStations.features.map(f => L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { icon: modIcon, title: f.properties.id + ' ' + f.properties.name }).bindTooltip(`<b>${esc(f.properties.id)}</b> ${esc(f.properties.short)}`, { direction: 'right', offset: [10, 0] }).bindPopup(modPopup(f.properties), { maxWidth: 250 })));
 const lyRef = L.layerGroup(D.refPoints.features.map(f => L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { radius: 4.5, color: '#fff', weight: 1.2, fillColor: '#8E6FB0', fillOpacity: 1 }).bindTooltip(`<b>${esc(f.properties.name)}</b><br>Project reference point (drain / water user association / village)`)));
 
 /* labels: governorates and rivers */
@@ -98,7 +100,7 @@ const lyRivLab = L.layerGroup();
 })();
 
 /* ---- overlay switches ---- */
-const ON = { basin: true, brivers: true, lakes: true, reaches: true, euph: true, canals: true, drains: true, hash: false, proj: false, gov: true, mod: false, ref: false };
+const ON = { basin: true, brivers: true, lakes: true, reaches: true, euph: true, canals: true, drains: true, hash: false, proj: false, gov: true, mod: true, ref: false };
 function syncNet() {
   const z = map.getZoom();
   net.forEach(n => { const want = ON[n.overlay] && z >= n.minZoom; if (want && !map.hasLayer(n.layer)) n.layer.addTo(map); if (!want && map.hasLayer(n.layer)) map.removeLayer(n.layer); });
@@ -122,7 +124,7 @@ function buildLayerPanel() {
     <h4>Transboundary basin</h4>${row('basin', 'Euphrates and Tigris basins (HydroBASINS)', '<i class="line" style="border-color:#1565C0;border-top-width:2px"></i>')}${row('brivers', 'Rivers of the basin (RIMES)', line('#5BA7DC', 2))}${row('lakes', 'Lakes and reservoirs (RIMES)', '<i class="line" style="border-color:#9BCDEB;border-top-width:6px;width:14px"></i>')}
     <div class="bm" style="margin:6px 0 2px"><button data-z="hrs">Zoom: Hillah system</button><button data-z="basin">Zoom: whole basin</button></div>
     <h4>Context</h4>${row('proj', 'Irrigation projects', line(C.ag, 2, 1))}${row('gov', 'Governorate boundaries', line(C.gov, 1, 1))}
-    <h4>Other source points</h4>${row('mod', 'MOD stations (status not stated)', '<i class="line" style="border-color:#6C7A89;border-top-width:6px;width:10px"></i>')}${row('ref', 'Project reference points', '<i class="line" style="border-color:#8E6FB0;border-top-width:6px;width:10px"></i>')}
+    <h4>Other source points</h4>${row('mod', 'MOD monitoring stations (4, fixed: hydrological + water quality)', '<i class="line" style="border-color:#7A3E0B;border-top-width:6px;width:10px"></i>')}${row('ref', 'Project reference points', '<i class="line" style="border-color:#8E6FB0;border-top-width:6px;width:10px"></i>')}
     <h4>Basemap</h4><div class="bm"><button data-b="light" class="on">Light</button><button data-b="streets">Streets</button><button data-b="imagery">Imagery</button></div>
     <div class="note" style="margin-top:6px">Canals and drains show more detail as you zoom in.</div></div>`;
   el.addEventListener('change', e => { const k = e.target.dataset.k; if (k) { ON[k] = e.target.checked; syncNet(); } });
