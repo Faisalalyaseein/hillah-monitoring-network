@@ -64,6 +64,7 @@ addNet(feats(df, f => under(f) && !f.properties.m), 'drains', 9, { color: C.drai
 [[f => f.properties.j && !f.properties.m, 4, 8], [f => !f.properties.j && !f.properties.m && cls(f.properties.c) <= 2, 2.6, 9], [f => !f.properties.j && !f.properties.m && cls(f.properties.c) === 3, 1.7, 10], [f => !f.properties.j && !f.properties.m && cls(f.properties.c) >= 4, 1.05, 12]]
   .forEach(([t, w, z]) => addNet(feats(df, f => !isDead(f.properties.s) && !under(f) && t(f)), 'drains', z, { color: C.drain, weight: w, opacity: .95 }, drainPopup));
 addNet(feats(df, f => f.properties.m), 'drains', 0, { color: C.mod, weight: 5, opacity: .95 }, drainPopup);
+addNet(D.modUp, 'drains', 0, { color: C.mod, weight: 4.4, opacity: .95 }, () => '<b>Main Outfall Drain</b> (upstream part, from OpenStreetMap, about 199 km)');
 
 const lyGov = L.geoJSON(D.governorates, { pane: 'network', renderer: cv, interactive: false, style: { color: C.gov, weight: 1.3, dashArray: '9 4 2 4', fill: false, opacity: .8 } });
 const lyProj = L.geoJSON(D.projects, {
